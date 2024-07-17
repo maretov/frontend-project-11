@@ -9,18 +9,18 @@ const schema = object({
 
 form.addEventListener('submit', (e) => {
   e.preventDefault();
-  const enteredUrl = input.value;
+  const feed = input.value;
 
-  if (watchedState.uploadedUrls.includes(enteredUrl)) {
+  if (watchedState.feeds.includes(feed)) {
     watchedState.state = 'exists';
     return;
   }
 
   schema
-    .validate({ url: enteredUrl })
+    .validate({ url: feed })
     .then((value) => {
-      watchedState.uploadedUrls.push(value.url);
-      watchedState.state = 'valid';
+      watchedState.feeds.push(value.url);
+      watchedState.state = 'uploaded';
     })
     .catch(() => {
       watchedState.state = 'invalid';
