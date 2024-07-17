@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "bootstrap": "^5.3.3",
+    "i18next": "^23.12.1",
     "on-change": "^5.0.1",
     "yup": "^1.4.0"
   }
