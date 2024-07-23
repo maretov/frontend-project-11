@@ -4,44 +4,139 @@ import resources from './locales/index.js';
 
 const form = document.querySelector('form');
 const input = form.querySelector('input');
+const button = form.querySelector('button');
 const feedback = document.querySelector('.feedback');
+const feedsSection = document.querySelector('.container-xx1');
+const postsContainer = feedsSection.querySelector('.posts');
+const feedsContainer = feedsSection.querySelector('.feeds');
 
-const appState = { // 4 states: uploaded, exists, invalid, uploading
-  feeds: [],
+const appState = { // 4 states: uploaded, exists, invalidUrl, invalidRss, uploading
   state: 'uploaded',
+  feeds: [],
+  posts: [],
+  feedsCount: 0,
+  postsCount: 0,
 };
 
 const i18nInstance = i18n.createInstance();
 i18nInstance.init({
   lng: 'ru',
-  debug: true,
+  debug: false,
   resources,
 });
+
+const makeFeedback = (feedbackClass, state) => {
+  if (feedbackClass === 'text-success') {
+    feedback.classList.remove('text-danger');
+    feedback.classList.add('text-success');
+  } else {
+    feedback.classList.remove('text-success');
+    feedback.classList.add('text-danger');
+  }
+  
+  if (state === 'uploaded') {
+    input.classList.remove('is-invalid');
+    input.value = '';
+    input.focus();
+  } else {
+    input.classList.add('is-invalid');
+  }
+
+  feedback.textContent = i18nInstance.t(`feedback.${state}`);
+};
+
+const makeContainerLayout = (container, containerHeader) => {
+  container.innerHTML = '';
+
+  const card = document.createElement('div');
+  card.classList.add('card', 'border-0');
+  container.append(card);
+
+  const cardBody = document.createElement('div');
+  cardBody.classList.add('card-body');
+  card.append(cardBody);
+
+  const h2 = document.createElement('h2');
+  h2.classList.add('card-title', 'h4');
+  h2.textContent = containerHeader;
+  cardBody.append(h2);
+
+  const ul = document.createElement('ul');
+  ul.classList.add('list-group', 'border-0', 'rounded-0');
+  card.append(ul);
+
+  return ul;
+};
+
+const fillFeedsContainer = (ul, feeds) => {
+  feeds.forEach((feed) => {
+    const { feedTitle, feedDescription } = feed;
+
+    const li = document.createElement('li');
+    li.classList.add('list-group-item', 'border-0', 'border-end-0');
+    ul.append(li);
+
+    const h3 = document.createElement('h3');
+    h3.classList.add('h6', 'm-0');
+    h3.textContent = feedTitle;
+    li.append(h3);
+    
+    const p = document.createElement('p');
+    p.classList.add('m-0', 'small', 'text-black-50');
+    p.textContent = feedDescription;
+    li.append(p);
+  });
+};
+
+const fillPostsContainer = (ul, posts) => {
+  posts.forEach((post) => {
+    const { postTitle, postDescription, postUrl } = post;
+
+    const li = document.createElement('li');
+    li.classList.add('list-group-item', 'border-0', 'border-end-0', 'd-flex', 'justify-content-between', 'align-items-start');
+    ul.append(li);
+
+    const a = document.createElement('a');
+    a.href = postUrl;
+    a.classList.add('fw-bold');
+    a.target = '_blank';
+    a.rel = 'noopener norefferer';
+    a.textContent = postTitle;
+    li.append(a);
+  });
+};
 
 const watchedState = onChange(appState, () => {
   const newState = appState.state;
   
   switch (newState) {
     case 'uploaded':
-      feedback.classList.remove('text-danger');
-      feedback.classList.add('text-success');
-      feedback.textContent = i18nInstance.t('feedback.uploaded');
-      input.classList.remove('is-invalid');
-      input.value = '';
-      input.focus();
+      button.disabled = false;
+      makeFeedback('text-success', 'uploaded');
+
+      if (appState.feedsCount > 0) {
+        const postsContainerHeader = i18nInstance.t('postsContainerHeader');
+        const postsUlContainer = makeContainerLayout(postsContainer, postsContainerHeader);
+        fillPostsContainer(postsUlContainer, appState.posts);
+
+        const feedsContainerHeader = i18nInstance.t('feedsContainerHeader');
+        const feedsUlContainer = makeContainerLayout(feedsContainer, feedsContainerHeader);
+        fillFeedsContainer(feedsUlContainer, appState.feeds);
+      }
+
       break;
-    case 'invalid':
-      feedback.classList.add('text-danger');
-      feedback.textContent = i18nInstance.t('feedback.invalid');
-      input.classList.add('is-invalid');
+    case 'invalidUrl':
+      makeFeedback('text-danger', 'invalidUrl');
+      break;
+    case 'invalidRss':
+      button.disabled = false;
+      makeFeedback('text-danger', 'invalidRss')
       break;
     case 'exists':
-      feedback.classList.add('text-danger');
-      feedback.textContent = i18nInstance.t('feedback.exists');
-      input.classList.add('is-invalid');
+      makeFeedback('text-danger', 'exists');
       break;
     case 'uploading':
-      
+      button.disabled = true;
       break;
     default:
       throw new Error(`Unknown state: ${newState}`);
