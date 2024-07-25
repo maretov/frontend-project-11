@@ -9,6 +9,46 @@ const schema = object({
   url: string().url(),
 });
 
+const addPostInPosts = (post, feedId) => {
+  const postId = watchedState.postsCount;
+  watchedState.postsCount += 1;
+  const postUrl = post.querySelector('link').textContent;
+  const postTitle = post.querySelector('title').textContent;
+  const postDescription = post.querySelector('description').textContent;
+
+  watchedState.posts.push({ feedId, postId, postUrl, postTitle, postDescription });
+};
+
+const updatePosts = () => {
+  // console.log('WHATCHEDSTATE.POSTS: ', watchedState.posts);
+  setTimeout(() => {
+    watchedState.feeds.forEach((feed) => {
+      const { feedId, feedUrl } = feed;
+      axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${feedUrl}`)
+        .then((response) => {
+          const { contents } = response.data;
+          const parsed = parseRss(contents, 'text/xml');
+          const feed = parsed.querySelector('channel');
+          const posts = feed.querySelectorAll('item');
+          const filteredPosts = watchedState.posts.filter((post) => post.feedId === feedId);
+          const startPosition = filteredPosts.length;
+          // console.log(`startPosittion: ${startPosition}`);
+          posts.forEach((post, index) => {
+            console.log(`index: ${index}`);
+            if (index >= startPosition) {
+              addPostInPosts(post, feedId);
+              console.log('POSTS UPDATED!');
+            }
+          });
+        })
+        .then(() => updatePosts())
+        .catch((error) => {
+          console.log('ERROR in setTimeout: ', error);
+        });
+    });
+  }, 2000);
+}
+
 form.addEventListener('submit', (e) => {
   e.preventDefault();
   const feedUrl = input.value;
@@ -44,7 +84,7 @@ form.addEventListener('submit', (e) => {
       const feedTitle = feed.querySelector('title').textContent;
       const feedDescription = feed.querySelector('description').textContent;
 
-      watchedState.feeds.push({ id: feedId, feedUrl, feedTitle, feedDescription });
+      watchedState.feeds.push({ feedId, feedUrl, feedTitle, feedDescription });
 
       const posts = feed.querySelectorAll('item');
       posts.forEach((post) => {
@@ -54,10 +94,13 @@ form.addEventListener('submit', (e) => {
         const postTitle = post.querySelector('title').textContent;
         const postDescription = post.querySelector('description').textContent;
 
-        watchedState.posts.push({ feedId, id: postId, postUrl, postTitle, postDescription });
+        watchedState.posts.push({ feedId, postId, postUrl, postTitle, postDescription });
       });
 
       watchedState.state = 'uploaded';
+    })
+    .then(() => {
+      updatePosts();
     })
     .catch((error) => {
       switch (error.name) {
