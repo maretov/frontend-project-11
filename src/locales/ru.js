@@ -9,4 +9,4 @@ export default {
     feedsContainerHeader: 'Фиды',
     postsContainerHeader: 'Посты',
   },
-}
+};

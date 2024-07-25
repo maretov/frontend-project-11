@@ -1,9 +1,9 @@
 import './styles.scss';
 import 'bootstrap';
 import { object, string } from 'yup';
-import { form, input, watchedState } from './view';
 import axios from 'axios';
-import { parseRss } from './parser';
+import { form, input, watchedState } from './view';
+import parseRss from './parser';
 
 const schema = object({
   url: string().url(),
@@ -16,57 +16,65 @@ const addPostInPosts = (post, feedId) => {
   const postTitle = post.querySelector('title').textContent;
   const postDescription = post.querySelector('description').textContent;
 
-  watchedState.posts.push({ feedId, postId, postUrl, postTitle, postDescription });
+  watchedState.posts.push({
+    feedId,
+    postId,
+    postUrl,
+    postTitle,
+    postDescription,
+  });
 };
 
 const updatePosts = () => {
-  // console.log('WHATCHEDSTATE.POSTS: ', watchedState.posts);
   setTimeout(() => {
     watchedState.feeds.forEach((feed) => {
       const { feedId, feedUrl } = feed;
-      axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${feedUrl}`)
+
+      axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(feedUrl)}`)
         .then((response) => {
           const { contents } = response.data;
           const parsed = parseRss(contents, 'text/xml');
-          const feed = parsed.querySelector('channel');
-          const posts = feed.querySelectorAll('item');
-          const filteredPosts = watchedState.posts.filter((post) => post.feedId === feedId);
-          const startPosition = filteredPosts.length;
-          // console.log(`startPosittion: ${startPosition}`);
-          posts.forEach((post, index) => {
-            console.log(`index: ${index}`);
-            if (index >= startPosition) {
+          const newFeed = parsed.querySelector('channel');
+          const posts = newFeed.querySelectorAll('item');
+
+          const filteredPostsUrls = watchedState.posts
+            .filter((post) => post.feedId === feedId)
+            .map((post) => post.postUrl);
+
+          posts.forEach((post) => {
+            const postUrl = post.querySelector('link').textContent;
+            if (!filteredPostsUrls.includes(postUrl)) {
               addPostInPosts(post, feedId);
-              console.log('POSTS UPDATED!');
             }
           });
         })
         .then(() => updatePosts())
         .catch((error) => {
-          console.log('ERROR in setTimeout: ', error);
+          console.log(`Error: ${error}`);
+          // alert(`Error: ${error.message}`);
         });
     });
-  }, 2000);
-}
+  }, 5000);
+};
 
 form.addEventListener('submit', (e) => {
   e.preventDefault();
-  const feedUrl = input.value;
+  const enteredUrl = input.value;
 
   const existedFeedUrls = watchedState.feeds.map(({ feedUrl }) => feedUrl);
-  if (existedFeedUrls.includes(feedUrl)) {
+  if (existedFeedUrls.includes(enteredUrl)) {
     watchedState.state = 'exists';
     return;
   }
 
   schema
-    .validate({ url: feedUrl })
+    .validate({ url: enteredUrl })
     .then(({ url }) => {
       watchedState.state = 'uploading';
-      return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${url}`);
+      return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`);
     })
     .then((response) => {
-      const { contents, status } = response.data; 
+      const { contents, status } = response.data;
 
       // checking rss for validity
       const format = contents.slice(0, 5);
@@ -74,7 +82,7 @@ form.addEventListener('submit', (e) => {
         watchedState.state = 'invalidRss';
         return;
       }
-      
+
       const parsed = parseRss(contents, 'text/xml');
       const feed = parsed.querySelector('channel');
 
@@ -84,7 +92,12 @@ form.addEventListener('submit', (e) => {
       const feedTitle = feed.querySelector('title').textContent;
       const feedDescription = feed.querySelector('description').textContent;
 
-      watchedState.feeds.push({ feedId, feedUrl, feedTitle, feedDescription });
+      watchedState.feeds.push({
+        feedId,
+        feedUrl,
+        feedTitle,
+        feedDescription,
+      });
 
       const posts = feed.querySelectorAll('item');
       posts.forEach((post) => {
@@ -94,7 +107,13 @@ form.addEventListener('submit', (e) => {
         const postTitle = post.querySelector('title').textContent;
         const postDescription = post.querySelector('description').textContent;
 
-        watchedState.posts.push({ feedId, postId, postUrl, postTitle, postDescription });
+        watchedState.posts.push({
+          feedId,
+          postId,
+          postUrl,
+          postTitle,
+          postDescription,
+        });
       });
 
       watchedState.state = 'uploaded';
@@ -109,7 +128,8 @@ form.addEventListener('submit', (e) => {
           watchedState.state = 'invalidUrl';
           break;
         default:
-          console.log('THIS IS UNKNOWN ERROR: ', error);
-      }  
+          console.log(`Error: ${error}`);
+          // alert(`Error: ${error.message}`);
+      }
     });
 });
