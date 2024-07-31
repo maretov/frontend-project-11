@@ -6,16 +6,21 @@ const form = document.querySelector('form');
 const input = form.querySelector('input');
 const button = form.querySelector('button');
 const feedback = document.querySelector('.feedback');
-const feedsSection = document.querySelector('.container-xx1');
+const feedsSection = document.querySelector('.container-xxl');
 const postsContainer = feedsSection.querySelector('.posts');
 const feedsContainer = feedsSection.querySelector('.feeds');
 
-const appState = { // 4 states: uploaded, exists, invalidUrl, invalidRss, uploading
+const appState = { // 5 possible states: uploaded, exists, invalidUrl, invalidRss, uploading
   state: 'uploaded',
   feeds: [],
   posts: [],
   feedsCount: 0,
   postsCount: 0,
+};
+
+const uiState = {
+  modalId: null,
+  posts: [],
 };
 
 const i18nInstance = i18n.createInstance();
@@ -91,57 +96,104 @@ const fillFeedsContainer = (ul, feeds) => {
 
 const fillPostsContainer = (ul, posts) => {
   posts.forEach((post) => {
-    const { postTitle, postUrl } = post;
+    const { postId, postTitle, postUrl } = post;
 
     const li = document.createElement('li');
-    li.classList.add('list-group-item', 'border-0', 'border-end-0', 'd-flex', 'justify-content-between', 'align-items-start');
+    li.classList.add(
+      'list-group-item',
+      'border-0',
+      'border-end-0',
+      'd-flex',
+      'justify-content-between',
+      'align-items-start',
+    );
     ul.append(li);
 
     const a = document.createElement('a');
     a.href = postUrl;
-    a.classList.add('fw-bold');
+    const uiPost = uiState.posts.find((el) => el.postId === postId);
+    const styleForUrl = uiPost.state === 'viewed' ? 'fw-normal' : 'fw-bold';
+    a.classList.add(styleForUrl);
     a.target = '_blank';
-    a.rel = 'noopener norefferer';
+    a.rel = 'noopener noreferrer';
     a.textContent = postTitle;
-    li.append(a);
+
+    const postButton = document.createElement('button');
+    postButton.type = 'button';
+    postButton.classList.add('btn', 'btn-outline-primary', 'btn-sm');
+    postButton.id = postId;
+    postButton.dataset.bsToggle = 'modal';
+    postButton.dataset.bsTarget = '#modal';
+    postButton.textContent = i18nInstance.t('posts.postButton');
+
+    li.append(a, postButton);
   });
 };
 
-const watchedState = onChange(appState, () => {
-  const newState = appState.state;
+const watchedState = onChange(appState, (path) => {
+  if (path === 'state') {
+    const newState = appState.state;
 
-  switch (newState) {
-    case 'uploaded':
-      button.disabled = false;
-      makeFeedback('text-success', 'uploaded');
+    switch (newState) {
+      case 'uploaded':
+        button.disabled = false;
+        makeFeedback('text-success', 'uploaded');
 
-      if (appState.feedsCount > 0) {
-        const postsContainerHeader = i18nInstance.t('postsContainerHeader');
-        const postsUlContainer = makeContainerLayout(postsContainer, postsContainerHeader);
-        fillPostsContainer(postsUlContainer, appState.posts);
+        if (appState.feedsCount > 0) {
+          const postsContainerHeader = i18nInstance.t('postsContainerHeader');
+          const postsUlContainer = makeContainerLayout(postsContainer, postsContainerHeader);
+          fillPostsContainer(postsUlContainer, appState.posts);
 
-        const feedsContainerHeader = i18nInstance.t('feedsContainerHeader');
-        const feedsUlContainer = makeContainerLayout(feedsContainer, feedsContainerHeader);
-        fillFeedsContainer(feedsUlContainer, appState.feeds);
-      }
+          const feedsContainerHeader = i18nInstance.t('feedsContainerHeader');
+          const feedsUlContainer = makeContainerLayout(feedsContainer, feedsContainerHeader);
+          fillFeedsContainer(feedsUlContainer, appState.feeds);
+        }
 
-      break;
-    case 'invalidUrl':
-      makeFeedback('text-danger', 'invalidUrl');
-      break;
-    case 'invalidRss':
-      button.disabled = false;
-      makeFeedback('text-danger', 'invalidRss');
-      break;
-    case 'exists':
-      makeFeedback('text-danger', 'exists');
-      break;
-    case 'uploading':
-      button.disabled = true;
-      break;
-    default:
-      throw new Error(`Unknown state: ${newState}`);
+        break;
+      case 'invalidUrl':
+        makeFeedback('text-danger', 'invalidUrl');
+        break;
+      case 'invalidRss':
+        button.disabled = false;
+        makeFeedback('text-danger', 'invalidRss');
+        break;
+      case 'exists':
+        makeFeedback('text-danger', 'exists');
+        break;
+      case 'uploading':
+        button.disabled = true;
+        break;
+      default:
+        throw new Error(`Unknown state: ${newState}`);
+    }
   }
 });
 
-export { form, input, watchedState };
+const watchedUiState = onChange(uiState, (path) => {
+  if (path === 'modalId') {
+    const modalPostId = uiState.modalId;
+    const modalPost = appState.posts.find((post) => post.postId === modalPostId);
+    const { postTitle, postDescription, postUrl } = modalPost;
+
+    const modal = document.querySelector('.modal');
+    const modalTitle = modal.querySelector('.modal-title');
+    const modalBody = modal.querySelector('.modal-body');
+    const modalButton = modal.querySelector('a');
+
+    modalTitle.textContent = postTitle;
+    modalBody.textContent = postDescription;
+    modalButton.href = postUrl;
+
+    const currentButton = document.getElementById(modalPostId);
+    const currentPostUrl = currentButton.previousSibling;
+    currentPostUrl.classList.replace('fw-bold', 'fw-normal');
+  }
+});
+
+export {
+  form,
+  input,
+  watchedState,
+  watchedUiState,
+  postsContainer,
+};

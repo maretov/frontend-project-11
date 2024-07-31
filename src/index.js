@@ -2,12 +2,30 @@ import './styles.scss';
 import 'bootstrap';
 import { object, string } from 'yup';
 import axios from 'axios';
-import { form, input, watchedState } from './view';
 import parseRss from './parser';
+import {
+  form,
+  input,
+  watchedState,
+  watchedUiState,
+  postsContainer,
+} from './view';
 
 const schema = object({
   url: string().url(),
 });
+
+const addListenersForButtons = () => {
+  const buttons = postsContainer.querySelectorAll('button');
+  buttons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const id = Number(button.id);
+      watchedUiState.modalId = id;
+      const viewedPost = watchedUiState.posts.find((post) => post.postId === id);
+      viewedPost.state = 'viewed';
+    });
+  });
+};
 
 const addPostInPosts = (post, feedId) => {
   const postId = watchedState.postsCount;
@@ -23,6 +41,16 @@ const addPostInPosts = (post, feedId) => {
     postTitle,
     postDescription,
   });
+
+  watchedUiState.posts.push({
+    postId,
+    state: 'notViewed',
+  });
+
+  watchedState.state = 'uploading';
+  watchedState.state = 'uploaded';
+
+  addListenersForButtons();
 };
 
 const updatePosts = () => {
@@ -114,9 +142,16 @@ form.addEventListener('submit', (e) => {
           postTitle,
           postDescription,
         });
+
+        watchedUiState.posts.push({
+          postId,
+          state: 'notViewed',
+        });
       });
 
       watchedState.state = 'uploaded';
+
+      addListenersForButtons();
     })
     .then(() => {
       updatePosts();
@@ -129,7 +164,6 @@ form.addEventListener('submit', (e) => {
           break;
         default:
           console.log(`Error: ${error}`);
-          // alert(`Error: ${error.message}`);
       }
     });
 });
