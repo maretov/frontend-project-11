@@ -15,13 +15,20 @@ const schema = object({
   url: string().url(),
 });
 
-const addListenersForButtons = () => {
-  const buttons = postsContainer.querySelectorAll('button');
-  buttons.forEach((button) => {
+const addListenersForUrlsAndButtons = () => {
+  const listItems = postsContainer.querySelectorAll('li');
+  listItems.forEach((listItem) => {
+    const a = listItem.querySelector('a');
+    const button = listItem.querySelector('button');
+    const id = Number(button.id);
+    const viewedPost = watchedUiState.posts.find((post) => post.postId === id);
+
+    a.addEventListener('click', () => {
+      viewedPost.state = 'viewed';
+    });
+
     button.addEventListener('click', () => {
-      const id = Number(button.id);
       watchedUiState.modalId = id;
-      const viewedPost = watchedUiState.posts.find((post) => post.postId === id);
       viewedPost.state = 'viewed';
     });
   });
@@ -50,7 +57,7 @@ const addPostInPosts = (post, feedId) => {
   watchedState.state = 'uploading';
   watchedState.state = 'uploaded';
 
-  addListenersForButtons();
+  addListenersForUrlsAndButtons();
 };
 
 const updatePosts = () => {
@@ -151,7 +158,7 @@ form.addEventListener('submit', (e) => {
 
       watchedState.state = 'uploaded';
 
-      addListenersForButtons();
+      addListenersForUrlsAndButtons();
     })
     .then(() => {
       updatePosts();

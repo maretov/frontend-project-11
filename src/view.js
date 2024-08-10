@@ -170,6 +170,12 @@ const watchedState = onChange(appState, (path) => {
 });
 
 const watchedUiState = onChange(uiState, (path) => {
+  const changeUrlStyle = (id) => {
+    const currentButton = document.getElementById(id);
+    const currentPostUrl = currentButton.previousSibling;
+    currentPostUrl.classList.replace('fw-bold', 'fw-normal');
+  };
+
   if (path === 'modalId') {
     const modalPostId = uiState.modalId;
     const modalPost = appState.posts.find((post) => post.postId === modalPostId);
@@ -184,9 +190,14 @@ const watchedUiState = onChange(uiState, (path) => {
     modalBody.textContent = postDescription;
     modalButton.href = postUrl;
 
-    const currentButton = document.getElementById(modalPostId);
-    const currentPostUrl = currentButton.previousSibling;
-    currentPostUrl.classList.replace('fw-bold', 'fw-normal');
+    changeUrlStyle(modalPostId);
+  } else {
+    const splittedPath = path.split('.');
+    if (splittedPath.length > 1) {
+      const currentPostId = Number(splittedPath[1]);
+
+      changeUrlStyle(currentPostId);
+    }
   }
 });
 
