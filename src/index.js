@@ -110,6 +110,13 @@ form.addEventListener('submit', (e) => {
     })
     .then((response) => {
       const { contents, status } = response.data;
+      const httpCode = status.http_code;
+      console.log(`httpCode: ${typeof httpCode}`);
+      if (httpCode !== 200) {
+        throw new Error('NetworkError');
+      }
+
+      console.log(`status:  ${JSON.stringify(status, null, ' ')}`);
 
       // checking rss for validity
       const format = contents.slice(0, 5);
@@ -164,13 +171,18 @@ form.addEventListener('submit', (e) => {
       updatePosts();
     })
     .catch((error) => {
+      console.log(`error: ${JSON.stringify(error, null, ' ')}`);
       switch (error.name) {
         case 'ValidationError':
-          console.log('THIS IS VALIDATION ERROR!!!');
+          console.log('This is ValidationError');
           watchedState.state = 'invalidUrl';
           break;
+        case 'Error':
+          console.log('This is NetworkError');
+          watchedState.state = 'networkError';
+          break;
         default:
-          console.log(`Error: ${error}`);
+          console.log(`This is unknown error: ${error}`);
       }
     });
 });

@@ -157,6 +157,9 @@ const watchedState = onChange(appState, (path) => {
         button.disabled = false;
         makeFeedback('text-danger', 'invalidRss');
         break;
+      case 'networkError':
+        makeFeedback('text-danger', 'networkError');
+        break;
       case 'exists':
         makeFeedback('text-danger', 'exists');
         break;
