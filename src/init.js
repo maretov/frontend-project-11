@@ -109,15 +109,17 @@ export default () => {
         return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`);
       })
       .then((response) => {
-        const { status } = response;
-        const { contents } = response.data;
+        console.log(JSON.stringify(response, null, '   '));
+        // const { status } = response; console.log('status: ', status);
+        const { contents, status } = response.data;
         const { url } = response.config;
         const splittedUrl = url.split('url=');
         const encodedUrl = splittedUrl[1];
         const decodedUrl = decodeURIComponent(encodedUrl);
-        console.log('---------------------RESPONSE------------------');
+        // console.log('---------------------RESPONSE------------------');
 
-        if (status !== 200) {
+        const httpCode = status.http_code; console.log(`httpCode ${httpCode}`);
+        if (httpCode !== 200) {
           throw new Error('NetworkError');
         }
 
