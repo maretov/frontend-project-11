@@ -104,10 +104,12 @@ export default () => {
     schema
       .validate({ url: enteredUrl })
       .then(({ url }) => {
+        console.log('---------------------WE ARE IN FIRST THEN!------------------');
         watchedState.state = 'uploading';
         return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`);
       })
       .then((response) => {
+        console.log('---------------------WE ARE IN SECOND THEN!------------------');
         const { contents, status } = response.data;
         console.log(JSON.stringify(status, null, ' '));
         // console.log(`status.http_code: ${status.http_code}`);
@@ -172,7 +174,7 @@ export default () => {
         updatePosts();
       })
       .catch((error) => {
-        // console.log(`error: ${JSON.stringify(error, null, ' ')}`);
+        console.log(`erroR: ${JSON.stringify(error, null, ' ')}`);
         switch (error.name) {
           case 'ValidationError':
             console.log('This is ValidationError');
