@@ -110,16 +110,23 @@ export default () => {
       })
       .then((response) => {
         console.log(JSON.stringify(response, null, '   '));
-        // const { status } = response; console.log('status: ', status);
-        const { contents, status } = response.data;
+        const { contents } = response.data;
         const { url } = response.config;
         const splittedUrl = url.split('url=');
         const encodedUrl = splittedUrl[1];
         const decodedUrl = decodeURIComponent(encodedUrl);
         // console.log('---------------------RESPONSE------------------');
 
-        const httpCode = status.http_code; console.log(`httpCode ${httpCode}`);
-        if (httpCode !== 200) {
+        // error handling 1
+        // const { status } = response.data; console.log('status: ', status);
+        // const httpCode = status.http_code; console.log(`httpCode ${httpCode}`);
+        // if (httpCode !== 200) {
+        //   throw new Error('NetworkError');
+        // }
+
+        // error handling 2
+        const { status } = response; console.log('status: ', status);
+        if (status !== 200) {
           throw new Error('NetworkError');
         }
 
