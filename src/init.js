@@ -108,18 +108,17 @@ export default () => {
         return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`);
       })
       .then((response) => {
+        const { status } = response;
         const { contents } = response.data;
-        const { status, url } = response;
+        const { url } = response.config;
+        const splittedUrl = url.split('url=');
+        const encodedUrl = splittedUrl[1];
+        const decodedUrl = decodeURIComponent(encodedUrl);
         console.log('---------------------RESPONSE------------------');
-        console.log(JSON.stringify(response, null, ' '));
-        // console.log(`status.http_code: ${status.http_code}`);
-        // const httpCode = status.http_code;
-        // console.log(`httpCode: ${typeof httpCode}`);
+
         if (status !== 200) {
           throw new Error('NetworkError');
         }
-
-        // console.log(`status:  ${JSON.stringify(status, null, ' ')}`);
 
         // checking rss for validity
         const format = contents.slice(0, 5);
@@ -133,7 +132,7 @@ export default () => {
 
         const feedId = watchedState.feedsCount;
         watchedState.feedsCount += 1;
-        const feedUrl = url;
+        const feedUrl = decodedUrl;
         const feedTitle = feed.querySelector('title').textContent;
         const feedDescription = feed.querySelector('description').textContent;
 
