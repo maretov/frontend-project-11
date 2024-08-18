@@ -104,14 +104,13 @@ export default () => {
     schema
       .validate({ url: enteredUrl })
       .then(({ url }) => {
-        console.log('---------------------WE ARE IN FIRST THEN!------------------');
         watchedState.state = 'uploading';
         return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`);
       })
       .then((response) => {
-        console.log('---------------------WE ARE IN SECOND THEN!------------------');
         const { contents, status } = response.data;
-        console.log(JSON.stringify(status, null, ' '));
+        console.log('---------------------RESPONSE------------------');
+        console.log(JSON.stringify(response, null, ' '));
         // console.log(`status.http_code: ${status.http_code}`);
         // const httpCode = status.http_code;
         // console.log(`httpCode: ${typeof httpCode}`);
