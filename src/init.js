@@ -108,14 +108,15 @@ export default () => {
         return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`);
       })
       .then((response) => {
-        const { contents, status } = response.data; console.log(`status.http_code: ${status.http_code}`);
-        const httpCode = status.http_code;
-        console.log(`httpCode: ${typeof httpCode}`);
-        if (httpCode !== 200) {
-          throw new Error('NetworkError');
-        }
+        const { contents, status } = response.data;
+        // console.log(`status.http_code: ${status.http_code}`);
+        // const httpCode = status.http_code;
+        // console.log(`httpCode: ${typeof httpCode}`);
+        // if (httpCode !== 200) {
+        //   throw new Error('NetworkError');
+        // }
 
-        console.log(`status:  ${JSON.stringify(status, null, ' ')}`);
+        // console.log(`status:  ${JSON.stringify(status, null, ' ')}`);
 
         // checking rss for validity
         const format = contents.slice(0, 5);
