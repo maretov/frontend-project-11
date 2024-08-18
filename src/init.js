@@ -104,6 +104,7 @@ export default () => {
     schema
       .validate({ url: enteredUrl })
       .then(({ url }) => {
+        console.log(`-------------------- URL: ${url} ---------------------`);
         watchedState.state = 'uploading';
         return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`);
       })
