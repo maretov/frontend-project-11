@@ -108,7 +108,7 @@ export default () => {
         return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`);
       })
       .then((response) => {
-        const { contents, status } = response.data;
+        const { contents, status } = response.data; console.log(`status.http_code: ${status.http_code}`);
         const httpCode = status.http_code;
         console.log(`httpCode: ${typeof httpCode}`);
         if (httpCode !== 200) {
@@ -181,7 +181,7 @@ export default () => {
             watchedState.state = 'networkError';
             break;
           default:
-            console.log(`This is unknown error: ${error}`);
+            console.log(`This is unknown erroR: ${error}`);
         }
       });
   });
