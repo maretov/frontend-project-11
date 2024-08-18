@@ -109,6 +109,7 @@ export default () => {
       })
       .then((response) => {
         const { contents, status } = response.data;
+        console.log(JSON.stringify(status, null, ' '));
         // console.log(`status.http_code: ${status.http_code}`);
         // const httpCode = status.http_code;
         // console.log(`httpCode: ${typeof httpCode}`);
@@ -171,7 +172,7 @@ export default () => {
         updatePosts();
       })
       .catch((error) => {
-        console.log(`error: ${JSON.stringify(error, null, ' ')}`);
+        // console.log(`error: ${JSON.stringify(error, null, ' ')}`);
         switch (error.name) {
           case 'ValidationError':
             console.log('This is ValidationError');
