@@ -108,15 +108,16 @@ export default () => {
         return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`);
       })
       .then((response) => {
-        const { contents, status } = response.data;
+        const { contents } = response.data;
+        const { status, url } = response;
         console.log('---------------------RESPONSE------------------');
         console.log(JSON.stringify(response, null, ' '));
         // console.log(`status.http_code: ${status.http_code}`);
         // const httpCode = status.http_code;
         // console.log(`httpCode: ${typeof httpCode}`);
-        // if (httpCode !== 200) {
-        //   throw new Error('NetworkError');
-        // }
+        if (status !== 200) {
+          throw new Error('NetworkError');
+        }
 
         // console.log(`status:  ${JSON.stringify(status, null, ' ')}`);
 
@@ -132,7 +133,7 @@ export default () => {
 
         const feedId = watchedState.feedsCount;
         watchedState.feedsCount += 1;
-        const feedUrl = status.url;
+        const feedUrl = url;
         const feedTitle = feed.querySelector('title').textContent;
         const feedDescription = feed.querySelector('description').textContent;
 
