@@ -109,7 +109,7 @@ export default () => {
         return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`);
       })
       .then((response) => {
-        console.log(JSON.stringify(response, null, '   '));
+        // console.log(JSON.stringify(response, null, '   '));
         const { contents } = response.data;
         const { url } = response.config;
         const splittedUrl = url.split('url=');
@@ -183,15 +183,16 @@ export default () => {
         updatePosts();
       })
       .catch((error) => {
-        console.log(`erroR: ${JSON.stringify(error, null, ' ')}`);
+        if (axios.isAxiosError(error)) {
+          console.log('This is NetworkError');
+          watchedState.state = 'networkError';
+        }
+
+        // console.log(`erroR: ${JSON.stringify(error, null, ' ')}`);
         switch (error.name) {
           case 'ValidationError':
             console.log('This is ValidationError');
             watchedState.state = 'invalidUrl';
-            break;
-          case 'Error':
-            console.log('This is NetworkError');
-            watchedState.state = 'networkError';
             break;
           default:
             console.log(`This is unknown erroR: ${error}`);
