@@ -85,7 +85,6 @@ export default () => {
           .then(() => updatePosts())
           .catch((error) => {
             console.log(`Error: ${error}`);
-            // alert(`Error: ${error.message}`);
           });
       });
     }, 5000);
@@ -109,26 +108,11 @@ export default () => {
         return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`);
       })
       .then((response) => {
-        // console.log(JSON.stringify(response, null, '   '));
         const { contents } = response.data;
         const { url } = response.config;
         const splittedUrl = url.split('url=');
         const encodedUrl = splittedUrl[1];
         const decodedUrl = decodeURIComponent(encodedUrl);
-        // console.log('---------------------RESPONSE------------------');
-
-        // error handling 1
-        // const { status } = response.data; console.log('status: ', status);
-        // const httpCode = status.http_code; console.log(`httpCode ${httpCode}`);
-        // if (httpCode !== 200) {
-        //   throw new Error('NetworkError');
-        // }
-
-        // error handling 2
-        const { status } = response; console.log('status: ', status);
-        if (status !== 200) {
-          throw new Error('NetworkError');
-        }
 
         // checking rss for validity
         const format = contents.slice(0, 5);
@@ -184,18 +168,11 @@ export default () => {
       })
       .catch((error) => {
         if (axios.isAxiosError(error)) {
-          console.log('This is NetworkError');
           watchedState.state = 'networkError';
-        }
-
-        // console.log(`erroR: ${JSON.stringify(error, null, ' ')}`);
-        switch (error.name) {
-          case 'ValidationError':
-            console.log('This is ValidationError');
-            watchedState.state = 'invalidUrl';
-            break;
-          default:
-            console.log(`This is unknown erroR: ${error}`);
+        } else if (error.name === 'ValidationError') {
+          watchedState.state = 'invalidUrl';
+        } else {
+          throw new Error(`Unknown error: ${error}`);
         }
       });
   });
