@@ -14,7 +14,7 @@ export default () => {
     url: string().url(),
   });
 
-  const addListenersForUrlsAndButtons = () => {
+  const addListeners = () => {
     const listItems = postsContainer.querySelectorAll('li');
     listItems.forEach((listItem) => {
       const a = listItem.querySelector('a');
@@ -56,10 +56,10 @@ export default () => {
     watchedState.state = 'uploading';
     watchedState.state = 'uploaded';
 
-    addListenersForUrlsAndButtons();
+    addListeners();
   };
 
-  const updatePosts = () => {
+  const startUpdatingPosts = () => {
     setTimeout(() => {
       watchedState.feeds.forEach((feed) => {
         const { feedId, feedUrl } = feed;
@@ -82,7 +82,7 @@ export default () => {
               }
             });
           })
-          .then(() => updatePosts())
+          .then(() => startUpdatingPosts())
           .catch((error) => {
             console.log(`Error: ${error}`);
           });
@@ -103,7 +103,6 @@ export default () => {
     schema
       .validate({ url: enteredUrl })
       .then(({ url }) => {
-        console.log(`-------------------- URL: ${url} ---------------------`);
         watchedState.state = 'uploading';
         return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`);
       })
@@ -161,10 +160,10 @@ export default () => {
 
         watchedState.state = 'uploaded';
 
-        addListenersForUrlsAndButtons();
+        addListeners();
       })
       .then(() => {
-        updatePosts();
+        startUpdatingPosts();
       })
       .catch((error) => {
         if (axios.isAxiosError(error)) {

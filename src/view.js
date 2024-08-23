@@ -6,9 +6,9 @@ const form = document.querySelector('form');
 const input = form.querySelector('input');
 const button = form.querySelector('button');
 const feedback = document.querySelector('.feedback');
-const feedsSection = document.querySelector('.container-xxl');
-const postsContainer = feedsSection.querySelector('.posts');
-const feedsContainer = feedsSection.querySelector('.feeds');
+const mainContainer = document.querySelector('.container-xxl');
+const postsContainer = mainContainer.querySelector('.posts');
+const feedsContainer = mainContainer.querySelector('.feeds');
 
 const appState = { // 5 possible states: uploaded, exists, invalidUrl, invalidRss, uploading
   state: 'uploaded',
@@ -85,12 +85,12 @@ const fillFeedsContainer = (ul, feeds) => {
     const h3 = document.createElement('h3');
     h3.classList.add('h6', 'm-0');
     h3.textContent = feedTitle;
-    li.append(h3);
 
     const p = document.createElement('p');
     p.classList.add('m-0', 'small', 'text-black-50');
     p.textContent = feedDescription;
-    li.append(p);
+    
+    li.append(h3, p);
   });
 };
 
