@@ -89,7 +89,7 @@ const fillFeedsContainer = (ul, feeds) => {
     const p = document.createElement('p');
     p.classList.add('m-0', 'small', 'text-black-50');
     p.textContent = feedDescription;
-    
+
     li.append(h3, p);
   });
 };
