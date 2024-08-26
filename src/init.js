@@ -113,21 +113,16 @@ export default () => {
         const encodedUrl = splittedUrl[1];
         const decodedUrl = decodeURIComponent(encodedUrl);
 
-        // checking rss for validity
-        const format = contents.slice(0, 5);
-        if (format !== '<?xml') {
+        const parsed = parseRss(contents, 'text/xml');
+        if (parsed === 'parsererror') {
           watchedState.state = 'invalidRss';
           return;
         }
 
-        const parsed = parseRss(contents, 'text/xml');
-        const feed = parsed.querySelector('channel');
-
         const feedId = watchedState.feedsCount;
         watchedState.feedsCount += 1;
         const feedUrl = decodedUrl;
-        const feedTitle = feed.querySelector('title').textContent;
-        const feedDescription = feed.querySelector('description').textContent;
+        const { feedTitle, feedDescription } = parsed.feed;
 
         watchedState.feeds.push({
           feedId,
@@ -136,13 +131,10 @@ export default () => {
           feedDescription,
         });
 
-        const posts = feed.querySelectorAll('item');
-        posts.forEach((post) => {
+        parsed.posts.forEach((post) => {
           const postId = watchedState.postsCount;
           watchedState.postsCount += 1;
-          const postUrl = post.querySelector('link').textContent;
-          const postTitle = post.querySelector('title').textContent;
-          const postDescription = post.querySelector('description').textContent;
+          const { postUrl, postTitle, postDescription } = post;
 
           watchedState.posts.push({
             feedId,
