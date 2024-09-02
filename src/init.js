@@ -14,31 +14,31 @@ export default () => {
     url: string().url(),
   });
 
-  const addListeners = () => {
-    const listItems = postsContainer.querySelectorAll('li');
-    listItems.forEach((listItem) => {
-      const a = listItem.querySelector('a');
-      const button = listItem.querySelector('button');
+  postsContainer.addEventListener('click', (e) => {
+    const getViewedPost = (button) => {
       const id = Number(button.id);
-      const viewedPost = watchedUiState.posts.find((post) => post.postId === id);
+      return watchedUiState.posts.find((post) => post.postId === id);
+    };
 
-      a.addEventListener('click', () => {
-        viewedPost.state = 'viewed';
-      });
-
-      button.addEventListener('click', () => {
-        watchedUiState.modalId = id;
-        viewedPost.state = 'viewed';
-      });
-    });
-  };
+    const tagName = e.target.tagName;
+    switch (tagName) {
+      case 'A':
+        const button = e.target.nextSibling;
+        getViewedPost(button).state = 'viewed';
+        break;
+      case 'BUTTON':
+        getViewedPost(e.target).state = 'viewed';
+        watchedUiState.modalId = Number(e.target.id);
+        break;
+      default:
+        break;
+    }
+  });
 
   const addPostInPosts = (post, feedId) => {
     const postId = watchedState.postsCount;
     watchedState.postsCount += 1;
-    const postUrl = post.querySelector('link').textContent;
-    const postTitle = post.querySelector('title').textContent;
-    const postDescription = post.querySelector('description').textContent;
+    const { postUrl, postTitle, postDescription } = post;
 
     watchedState.posts.push({
       feedId,
@@ -55,8 +55,6 @@ export default () => {
 
     watchedState.state = 'uploading';
     watchedState.state = 'uploaded';
-
-    addListeners();
   };
 
   const startUpdatingPosts = () => {
@@ -68,15 +66,14 @@ export default () => {
           .then((response) => {
             const { contents } = response.data;
             const parsed = parseRss(contents, 'text/xml');
-            const newFeed = parsed.querySelector('channel');
-            const posts = newFeed.querySelectorAll('item');
+            const { posts } = parsed;
 
             const filteredPostsUrls = watchedState.posts
               .filter((post) => post.feedId === feedId)
               .map((post) => post.postUrl);
 
             posts.forEach((post) => {
-              const postUrl = post.querySelector('link').textContent;
+              const { postUrl } = post;
               if (!filteredPostsUrls.includes(postUrl)) {
                 addPostInPosts(post, feedId);
               }
@@ -151,8 +148,6 @@ export default () => {
         });
 
         watchedState.state = 'uploaded';
-
-        addListeners();
       })
       .then(() => {
         startUpdatingPosts();
