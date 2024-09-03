@@ -14,30 +14,6 @@ export default () => {
     url: string().url(),
   });
 
-  postsContainer.addEventListener('click', (e) => {
-    const getViewedPost = (button) => {
-      const id = Number(button.id);
-      return watchedUiState.posts.find((post) => post.postId === id);
-    };
-
-    switch (e.target.tagName) {
-      case 'A': {
-        const button = e.target.nextSibling;
-        const viewedPost = getViewedPost(button);
-        viewedPost.state = 'viewed';
-        break;
-      }
-      case 'BUTTON': {
-        const viewedPost = getViewedPost(e.target);
-        viewedPost.state = 'viewed';
-        watchedUiState.modalId = Number(e.target.id);
-        break;
-      }
-      default:
-        break;
-    }
-  });
-
   const addPostInPosts = (post, feedId) => {
     const postId = watchedState.postsCount;
     watchedState.postsCount += 1;
@@ -89,6 +65,32 @@ export default () => {
       });
     }, 5000);
   };
+
+  startUpdatingPosts();
+
+  postsContainer.addEventListener('click', (e) => {
+    const getViewedPost = (button) => {
+      const id = Number(button.id);
+      return watchedUiState.posts.find((post) => post.postId === id);
+    };
+
+    switch (e.target.tagName) {
+      case 'A': {
+        const button = e.target.nextSibling;
+        const viewedPost = getViewedPost(button);
+        viewedPost.state = 'viewed';
+        break;
+      }
+      case 'BUTTON': {
+        const viewedPost = getViewedPost(e.target);
+        viewedPost.state = 'viewed';
+        watchedUiState.modalId = Number(e.target.id);
+        break;
+      }
+      default:
+        break;
+    }
+  });
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -151,9 +153,6 @@ export default () => {
         });
 
         watchedState.state = 'uploaded';
-      })
-      .then(() => {
-        startUpdatingPosts();
       })
       .catch((error) => {
         if (axios.isAxiosError(error)) {
