@@ -24,7 +24,7 @@ export default () => {
       case 'A': {
         const button = e.target.nextSibling;
         getViewedPost(button).state = 'viewed';
-        break; 
+        break;
       }
       case 'BUTTON':
         getViewedPost(e.target).state = 'viewed';
