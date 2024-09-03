@@ -23,13 +23,16 @@ export default () => {
     switch (e.target.tagName) {
       case 'A': {
         const button = e.target.nextSibling;
-        getViewedPost(button).state = 'viewed';
+        const viewedPost = getViewedPost(button);
+        viewedPost.state = 'viewed';
         break;
       }
-      case 'BUTTON':
-        getViewedPost(e.target).state = 'viewed';
+      case 'BUTTON': {
+        const viewedPost = getViewedPost(e.target);
+        viewedPost.state = 'viewed';
         watchedUiState.modalId = Number(e.target.id);
         break;
+      }
       default:
         break;
     }
