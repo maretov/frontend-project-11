@@ -1,13 +1,13 @@
 import { object, string } from 'yup';
 import axios from 'axios';
-import parseRss from './parser';
+import parseRss from './parser.js';
 import {
   form,
   input,
   watchedState,
   watchedUiState,
   postsContainer,
-} from './view';
+} from './view.js';
 
 export default () => {
   const schema = object({
@@ -20,12 +20,12 @@ export default () => {
       return watchedUiState.posts.find((post) => post.postId === id);
     };
 
-    const tagName = e.target.tagName;
-    switch (tagName) {
-      case 'A':
+    switch (e.target.tagName) {
+      case 'A': {
         const button = e.target.nextSibling;
         getViewedPost(button).state = 'viewed';
-        break;
+        break; 
+      }
       case 'BUTTON':
         getViewedPost(e.target).state = 'viewed';
         watchedUiState.modalId = Number(e.target.id);
