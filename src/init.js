@@ -14,6 +14,8 @@ export default () => {
     url: string().url(),
   });
 
+  const alloriginsUrl = 'https://allorigins.hexlet.app/get?disableCache=true';
+
   const addPostInPosts = (post, feedId) => {
     const postId = watchedState.postsCount;
     watchedState.postsCount += 1;
@@ -36,13 +38,25 @@ export default () => {
     watchedState.state = 'uploaded';
   };
 
+  const getUrlFromResponse = (response) => {
+    const { url } = response.config;
+    const splittedUrl = url.split('url=');
+    const encodedUrl = splittedUrl[1];
+    return decodeURIComponent(encodedUrl);
+  };
+
   const startUpdatingPosts = () => {
     setTimeout(() => {
-      watchedState.feeds.forEach((feed) => {
-        const { feedId, feedUrl } = feed;
+      const promises = watchedState.feeds
+        .map(({ feedUrl }) => axios.get(`${alloriginsUrl}&url=${encodeURIComponent(feedUrl)}`));
 
-        axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(feedUrl)}`)
-          .then((response) => {
+      Promise.all(promises)
+        .then((responses) => {
+          responses.forEach((response) => {
+            const currentUrl = getUrlFromResponse(response);
+            const feed = watchedState.feeds.find(({ feedUrl }) => feedUrl === currentUrl);
+            const { feedId } = feed;
+
             const { contents } = response.data;
             const parsed = parseRss(contents, 'text/xml');
             const { posts } = parsed;
@@ -57,12 +71,14 @@ export default () => {
                 addPostInPosts(post, feedId);
               }
             });
-          })
-          .then(() => startUpdatingPosts())
-          .catch((error) => {
-            console.log(`Error: ${error}`);
           });
-      });
+        })
+        .catch((error) => {
+          console.log(`Updating erroR: ${error}`);
+        })
+        .finally(() => {
+          startUpdatingPosts();
+        });
     }, 5000);
   };
 
@@ -106,14 +122,11 @@ export default () => {
       .validate({ url: enteredUrl })
       .then(({ url }) => {
         watchedState.state = 'uploading';
-        return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`);
+        return axios.get(`${alloriginsUrl}&url=${encodeURIComponent(url)}`);
       })
       .then((response) => {
         const { contents } = response.data;
-        const { url } = response.config;
-        const splittedUrl = url.split('url=');
-        const encodedUrl = splittedUrl[1];
-        const decodedUrl = decodeURIComponent(encodedUrl);
+        const url = getUrlFromResponse(response);
 
         const parsed = parseRss(contents, 'text/xml');
         if (parsed === 'parsererror') {
@@ -123,7 +136,7 @@ export default () => {
 
         const feedId = watchedState.feedsCount;
         watchedState.feedsCount += 1;
-        const feedUrl = decodedUrl;
+        const feedUrl = url;
         const { feedTitle, feedDescription } = parsed.feed;
 
         watchedState.feeds.push({
