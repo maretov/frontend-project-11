@@ -1,4 +1,4 @@
-import { object, string } from 'yup';
+import { string } from 'yup';
 import axios from 'axios';
 import parseRss from './parser.js';
 import {
@@ -10,9 +10,7 @@ import {
 } from './view.js';
 
 export default () => {
-  const schema = object({
-    url: string().url(),
-  });
+  const createSchema = (urls) => string().url().notOneOf(urls);
 
   const alloriginsUrl = 'https://allorigins.hexlet.app/get?disableCache=true';
 
@@ -112,15 +110,9 @@ export default () => {
     e.preventDefault();
     const enteredUrl = input.value;
 
-    const existedFeedUrls = watchedState.feeds.map(({ feedUrl }) => feedUrl);
-    if (existedFeedUrls.includes(enteredUrl)) {
-      watchedState.state = 'exists';
-      return;
-    }
-
-    schema
-      .validate({ url: enteredUrl })
-      .then(({ url }) => {
+    createSchema(watchedState.existedFeedUrls)
+      .validate(enteredUrl)
+      .then((url) => {
         watchedState.state = 'uploading';
         return axios.get(`${alloriginsUrl}&url=${encodeURIComponent(url)}`);
       })
@@ -133,6 +125,8 @@ export default () => {
           watchedState.state = 'invalidRss';
           return;
         }
+
+        watchedState.existedFeedUrls.push(url);
 
         const feedId = watchedState.feedsCount;
         watchedState.feedsCount += 1;
@@ -170,11 +164,24 @@ export default () => {
       .catch((error) => {
         if (axios.isAxiosError(error)) {
           watchedState.state = 'networkError';
-        } else if (error.name === 'ValidationError') {
-          watchedState.state = 'invalidUrl';
-        } else {
-          throw new Error(`Unknown error: ${error}`);
+          return;
         }
+
+        if (error.name === 'ValidationError') {
+          switch (error.type) {
+            case 'url':
+              watchedState.state = 'invalidUrl';
+              break;
+            case 'notOneOf':
+              watchedState.state = 'exists';
+              break;
+            default:
+              throw new Error(`Unknown error.type: ${error.type}`);
+          }
+          return;
+        }
+
+        throw new Error(`Unknown error: ${error}`);
       });
   });
 };

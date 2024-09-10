@@ -16,6 +16,7 @@ const appState = { // 5 possible states: uploaded, exists, invalidUrl, invalidRs
   posts: [],
   feedsCount: 0,
   postsCount: 0,
+  existedFeedUrls: [],
 };
 
 const uiState = {
