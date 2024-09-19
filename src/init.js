@@ -1,25 +1,55 @@
 import { string } from 'yup';
 import axios from 'axios';
+import i18n from 'i18next';
 import parseRss from './parser.js';
+import resources from './locales/index.js';
 import {
   form,
   input,
-  watchedState,
-  watchedUiState,
+  startStateWatching,
   postsContainer,
 } from './view.js';
 
+const state = { // 6 possible states: uploaded, exists, invalidUrl, invalidRss, uploading, updated
+  app: {
+    state: 'uploaded',
+    nextId: 0,
+    feeds: [],
+    posts: [],
+  },
+  ui: {
+    modalId: null,
+    posts: [],
+  },
+};
+
 export default () => {
-  const createSchema = (urls) => string().url().notOneOf(urls);
+  let watchedState;
+
+  const i18nInstance = i18n.createInstance();
+  i18nInstance
+    .init({
+      lng: 'ru',
+      debug: false,
+      resources,
+    })
+    .then(() => {
+      watchedState = startStateWatching(state, i18nInstance);
+    });
 
   const alloriginsUrl = 'https://allorigins.hexlet.app/get?disableCache=true';
 
+  const createSchema = () => {
+    const existedUrls = state.app.feeds.map(({ feedUrl }) => feedUrl);
+    return string().url().notOneOf(existedUrls);
+  };
+
   const addPostInPosts = (post, feedId) => {
-    const postId = watchedState.postsCount;
-    watchedState.postsCount += 1;
+    const postId = watchedState.app.nextId;
+    watchedState.app.nextId += 1;
     const { postUrl, postTitle, postDescription } = post;
 
-    watchedState.posts.push({
+    watchedState.app.posts.push({
       feedId,
       postId,
       postUrl,
@@ -27,13 +57,13 @@ export default () => {
       postDescription,
     });
 
-    watchedUiState.posts.push({
+    watchedState.ui.posts.push({
       postId,
       state: 'notViewed',
     });
 
-    watchedState.state = 'uploading';
-    watchedState.state = 'uploaded';
+    watchedState.app.state = 'uploading';
+    watchedState.app.state = 'updated';
   };
 
   const getUrlFromResponse = (response) => {
@@ -45,21 +75,20 @@ export default () => {
 
   const startUpdatingPosts = () => {
     setTimeout(() => {
-      const promises = watchedState.feeds
+      const promises = watchedState.app.feeds
         .map(({ feedUrl }) => axios.get(`${alloriginsUrl}&url=${encodeURIComponent(feedUrl)}`));
 
       Promise.all(promises)
         .then((responses) => {
           responses.forEach((response) => {
             const currentUrl = getUrlFromResponse(response);
-            const feed = watchedState.feeds.find(({ feedUrl }) => feedUrl === currentUrl);
+            const feed = watchedState.app.feeds.find(({ feedUrl }) => feedUrl === currentUrl);
             const { feedId } = feed;
 
-            const { contents } = response.data;
-            const parsed = parseRss(contents, 'text/xml');
+            const parsed = parseRss(response.data.contents, 'text/xml');
             const { posts } = parsed;
 
-            const filteredPostsUrls = watchedState.posts
+            const filteredPostsUrls = watchedState.app.posts
               .filter((post) => post.feedId === feedId)
               .map((post) => post.postUrl);
 
@@ -72,7 +101,7 @@ export default () => {
           });
         })
         .catch((error) => {
-          console.log(`Updating erroR: ${error}`);
+          console.log(`Updating error: ${error}`);
         })
         .finally(() => {
           startUpdatingPosts();
@@ -85,7 +114,7 @@ export default () => {
   postsContainer.addEventListener('click', (e) => {
     const getViewedPost = (button) => {
       const id = Number(button.id);
-      return watchedUiState.posts.find((post) => post.postId === id);
+      return watchedState.ui.posts.find((post) => post.postId === id);
     };
 
     switch (e.target.tagName) {
@@ -98,7 +127,7 @@ export default () => {
       case 'BUTTON': {
         const viewedPost = getViewedPost(e.target);
         viewedPost.state = 'viewed';
-        watchedUiState.modalId = Number(e.target.id);
+        watchedState.ui.modalId = Number(e.target.id);
         break;
       }
       default:
@@ -110,30 +139,25 @@ export default () => {
     e.preventDefault();
     const enteredUrl = input.value;
 
-    createSchema(watchedState.existedFeedUrls)
+    createSchema()
       .validate(enteredUrl)
       .then((url) => {
-        watchedState.state = 'uploading';
+        watchedState.app.state = 'uploading';
         return axios.get(`${alloriginsUrl}&url=${encodeURIComponent(url)}`);
       })
       .then((response) => {
-        const { contents } = response.data;
-        const url = getUrlFromResponse(response);
-
-        const parsed = parseRss(contents, 'text/xml');
+        const parsed = parseRss(response.data.contents, 'text/xml');
         if (parsed === 'parsererror') {
-          watchedState.state = 'invalidRss';
+          watchedState.app.state = 'invalidRss';
           return;
         }
 
-        watchedState.existedFeedUrls.push(url);
-
-        const feedId = watchedState.feedsCount;
-        watchedState.feedsCount += 1;
-        const feedUrl = url;
+        const feedId = watchedState.app.nextId;
+        watchedState.app.nextId += 1;
+        const feedUrl = getUrlFromResponse(response);
         const { feedTitle, feedDescription } = parsed.feed;
 
-        watchedState.feeds.push({
+        watchedState.app.feeds.push({
           feedId,
           feedUrl,
           feedTitle,
@@ -141,11 +165,11 @@ export default () => {
         });
 
         parsed.posts.forEach((post) => {
-          const postId = watchedState.postsCount;
-          watchedState.postsCount += 1;
+          const postId = watchedState.app.nextId;
+          watchedState.app.nextId += 1;
           const { postUrl, postTitle, postDescription } = post;
 
-          watchedState.posts.push({
+          watchedState.app.posts.push({
             feedId,
             postId,
             postUrl,
@@ -153,27 +177,27 @@ export default () => {
             postDescription,
           });
 
-          watchedUiState.posts.push({
+          watchedState.ui.posts.push({
             postId,
             state: 'notViewed',
           });
         });
 
-        watchedState.state = 'uploaded';
+        watchedState.app.state = 'uploaded';
       })
       .catch((error) => {
         if (axios.isAxiosError(error)) {
-          watchedState.state = 'networkError';
+          watchedState.app.state = 'networkError';
           return;
         }
 
         if (error.name === 'ValidationError') {
           switch (error.type) {
             case 'url':
-              watchedState.state = 'invalidUrl';
+              watchedState.app.state = 'invalidUrl';
               break;
             case 'notOneOf':
-              watchedState.state = 'exists';
+              watchedState.app.state = 'exists';
               break;
             default:
               throw new Error(`Unknown error.type: ${error.type}`);
