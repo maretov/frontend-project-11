@@ -115,6 +115,18 @@ const startStateWatching = (state, i18nInstance) => {
     currentPostUrl.classList.replace('fw-bold', 'fw-normal');
   };
 
+  const fillMainContainer = () => {
+    if (state.app.feeds.length > 0) {
+      const postsContainerHeader = i18nInstance.t('postsContainerHeader');
+      const postsUlContainer = makeContainerLayout(postsContainer, postsContainerHeader);
+      fillPostsContainer(postsUlContainer, state.app.posts);
+
+      const feedsContainerHeader = i18nInstance.t('feedsContainerHeader');
+      const feedsUlContainer = makeContainerLayout(feedsContainer, feedsContainerHeader);
+      fillFeedsContainer(feedsUlContainer, state.app.feeds);
+    }
+  };
+
   const watchedState = onChange(state, (path) => {
     const splittedPath = path.split('.');
 
@@ -124,55 +136,44 @@ const startStateWatching = (state, i18nInstance) => {
           switch (state.app.state) {
             case 'uploaded':
               button.disabled = false;
+              fillMainContainer();
               makeFeedback('text-success', 'uploaded');
-
-              if (state.app.feeds.length > 0) {
-                const postsContainerHeader = i18nInstance.t('postsContainerHeader');
-                const postsUlContainer = makeContainerLayout(postsContainer, postsContainerHeader);
-                fillPostsContainer(postsUlContainer, state.app.posts);
-
-                const feedsContainerHeader = i18nInstance.t('feedsContainerHeader');
-                const feedsUlContainer = makeContainerLayout(feedsContainer, feedsContainerHeader);
-                fillFeedsContainer(feedsUlContainer, state.app.feeds);
-              }
-
               break;
+
             case 'updated':
               button.disabled = false;
-              if (state.app.feeds.length > 0) {
-                const postsContainerHeader = i18nInstance.t('postsContainerHeader');
-                const postsUlContainer = makeContainerLayout(postsContainer, postsContainerHeader);
-                fillPostsContainer(postsUlContainer, state.app.posts);
-
-                const feedsContainerHeader = i18nInstance.t('feedsContainerHeader');
-                const feedsUlContainer = makeContainerLayout(feedsContainer, feedsContainerHeader);
-                fillFeedsContainer(feedsUlContainer, state.app.feeds);
-              }
+              fillMainContainer();
               break;
+
             case 'invalidUrl':
               makeFeedback('text-danger', 'invalidUrl');
               break;
+
             case 'invalidRss':
               button.disabled = false;
               makeFeedback('text-danger', 'invalidRss');
               break;
+
             case 'networkError':
               button.disabled = false;
               makeFeedback('text-danger', 'networkError');
               break;
+
             case 'exists':
               makeFeedback('text-danger', 'exists');
               break;
+
             case 'uploading':
               button.disabled = true;
               break;
+
             default:
               throw new Error(`Unknown state: ${state.app.state}`);
           }
         }
         break;
-      case 'ui':
 
+      case 'ui':
         switch (splittedPath[1]) {
           case 'modalId': {
             const modalPostId = state.ui.modalId;
@@ -191,6 +192,7 @@ const startStateWatching = (state, i18nInstance) => {
             changeUrlStyle(modalPostId);
             break;
           }
+
           case 'posts':
             if (splittedPath[2]) {
               const changedPost = state.ui.posts[splittedPath[2]];
@@ -198,11 +200,12 @@ const startStateWatching = (state, i18nInstance) => {
               changeUrlStyle(postId);
             }
             break;
+
           default:
             throw new Error(`Full path: ${splittedPath}. Unknown part of path: ${splittedPath[1]}`);
         }
-
         break;
+
       default:
         throw new Error(`Full path: ${splittedPath}. Unknown part of path: ${splittedPath[0]}`);
     }
