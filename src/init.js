@@ -61,9 +61,6 @@ export default () => {
       postId,
       state: 'notViewed',
     });
-
-    watchedState.app.state = 'uploading';
-    watchedState.app.state = 'updated';
   };
 
   const getUrlFromResponse = (response) => {
@@ -98,6 +95,8 @@ export default () => {
                 addPostInPosts(post, feedId);
               }
             });
+            watchedState.app.state = 'uploading';
+            watchedState.app.state = 'updated';
           });
         })
         .catch((error) => {
@@ -165,22 +164,7 @@ export default () => {
         });
 
         parsed.posts.forEach((post) => {
-          const postId = watchedState.app.nextId;
-          watchedState.app.nextId += 1;
-          const { postUrl, postTitle, postDescription } = post;
-
-          watchedState.app.posts.push({
-            feedId,
-            postId,
-            postUrl,
-            postTitle,
-            postDescription,
-          });
-
-          watchedState.ui.posts.push({
-            postId,
-            state: 'notViewed',
-          });
+          addPostInPosts(post, feedId);
         });
 
         watchedState.app.state = 'uploaded';
